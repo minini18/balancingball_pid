@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Balancing Robot Simulation</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-link active">모드 1: 기본</a>
+                <a href="index2.html" class="nav-link">모드 2: 아두이노</a>
+                <a href="index3.html" class="nav-link">모드 3: 레벨 & PID 랩</a>
+            </nav>
+            <h1>Ball Balancing Simulation</h1>
+            <p>Use <kbd>Left</kbd> and <kbd>Right</kbd> arrow keys to tilt the beam and balance the ball.</p>
+            <div class="controls">
+                <button id="randomBtn" class="toggle-btn">Random: OFF</button>
+                <button id="autoBtn" class="toggle-btn">Auto: OFF</button>
+                <button id="pidBtn" class="toggle-btn">PID: OFF</button>
+                <button id="rlBtn" class="toggle-btn">RL: OFF</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="simulation-area">
+                <div class="canvas-wrapper">
+                    <canvas id="simulationCanvas" width="800" height="400"></canvas>
+                    <div id="gameOverOverlay" class="overlay hidden">
+                        <h2>Game Over!</h2>
+                        <p>The ball fell off the edge.</p>
+                        <button id="restartBtn">Try Again</button>
+                    </div>
+                </div>
+                
+                <div class="dashboard">
+                    <div class="metric">
+                        <span class="label">Angle:</span>
+                        <span id="angleValue" class="value">0.0°</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Distance from left:</span>
+                        <span id="distanceValue" class="value">0px</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="settings-panel">
+                <h2>Settings</h2>
+                <div class="control-group">
+                    <label for="beamWidthSlider">Slope Length (<span id="beamWidthDisplay">600</span>)</label>
+                    <input type="range" id="beamWidthSlider" min="100" max="800" step="10" value="600">
+                </div>
+                <div class="control-group">
+                    <label for="gravitySlider">Ball Speed / Gravity (<span id="gravityDisplay">981</span>)</label>
+                    <input type="range" id="gravitySlider" min="100" max="10000" step="10" value="981">
+                </div>
+                
+                <h3>PID Controller</h3>
+                <div class="control-group">
+                    <label for="pGainSlider">P Gain (<span id="pGainDisplay">0.002</span>)</label>
+                    <input type="range" id="pGainSlider" min="0" max="0.05" step="0.001" value="0.002">
+                </div>
+                <div class="control-group">
+                    <label for="iGainSlider">I Gain (<span id="iGainDisplay">0</span>)</label>
+                    <input type="range" id="iGainSlider" min="0" max="0.005" step="0.0001" value="0">
+                </div>
+                <div class="control-group">
+                    <label for="dGainSlider">D Gain (<span id="dGainDisplay">0.004</span>)</label>
+                    <input type="range" id="dGainSlider" min="0" max="0.1" step="0.001" value="0.004">
+                </div>
+
+                <div class="control-actions">
+                    <button id="randomPosBtn" class="action-btn">Random Ball Position</button>
+                </div>
+
+                <h3>RL Dashboard</h3>
+                <div class="rl-dashboard">
+                    <div class="control-group">
+                        <label>Episode: <span id="rlEpisodeDisplay">0</span></label>
+                    </div>
+                    <div class="control-group">
+                        <label>Survival Time: <span id="rlSurvivalDisplay">0.0s</span></label>
+                    </div>
+                    <div class="control-group">
+                        <label>Epsilon: <span id="rlEpsilonDisplay">1.000</span></label>
+                    </div>
+                    
+                    <canvas id="rlGraphCanvas" width="300" height="150" title="Survival Time per Episode"></canvas>
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

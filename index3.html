@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Balancing Robot - Level & PID Tuning Lab</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* index3 전용 강화 스타일 */
+        :root {
+            --level1-color: #38bdf8;
+            --level2-color: #f59e0b;
+            --level3-color: #ef4444;
+            --pid-active-color: #10b981;
+            --mono-font: 'JetBrains Mono', monospace;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-color: #64748b;
+        }
+
+        .nav-link.active {
+            color: var(--primary-color);
+            background: #1e293b;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        /* 레벨 선택기 */
+        .level-selector-box {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            align-items: center;
+        }
+
+        .level-title-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .level-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .level-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            background: #1e293b;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .level-btn .badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .level-btn:hover {
+            border-color: #64748b;
+            transform: translateY(-1px);
+        }
+
+        .level-btn.active[data-level="1"] {
+            border-color: var(--level1-color);
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--level1-color);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .level-btn.active[data-level="2"] {
+            border-color: var(--level2-color);
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--level2-color);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .level-btn.active[data-level="3"] {
+            border-color: var(--level3-color);
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--level3-color);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* 메인 컨트롤 바 */
+        .main-control-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .big-pid-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.8rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 30px;
+            border: 2px solid #334155;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .big-pid-btn .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .big-pid-btn.active {
+            border-color: var(--pid-active-color);
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .big-pid-btn.active .status-dot {
+            background-color: #34d399;
+            box-shadow: 0 0 8px #34d399;
+        }
+
+        .action-icon-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.7rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-icon-btn:hover {
+            background: #334155;
+            transform: translateY(-1px);
+        }
+
+        /* 레벨 정보 배너 */
+        .level-info-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .level-tag {
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* PID 게인 제어 컨트롤 그룹 */
+        .gain-slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .gain-num-input {
+            width: 80px;
+            padding: 0.2rem 0.4rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: var(--primary-color);
+            font-family: var(--mono-font);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .gain-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.2rem;
+        }
+
+        /* 프리셋 버튼 */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .preset-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.45rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            background: #1e293b;
+        }
+
+        /* PID 기여도 바 */
+        .breakdown-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-family: var(--mono-font);
+        }
+
+        .bar-label {
+            width: 20px;
+            font-weight: 700;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            transition: width 0.05s, left 0.05s;
+        }
+
+        .bar-val {
+            width: 55px;
+            text-align: right;
+            color: #94a3b8;
+        }
+
+        /* 실시간 차트 */
+        #scopeCanvas {
+            width: 100%;
+            height: 110px;
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .scope-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 상단 네비게이션 및 헤더 -->
+        <header>
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-link">모드 1: 기본</a>
+                <a href="index2.html" class="nav-link">모드 2: 아두이노</a>
+                <a href="index3.html" class="nav-link active">모드 3: 레벨 & PID 랩</a>
+            </nav>
+
+            <h1>Ball Balancing PID Lab</h1>
+            <p>공의 난이도 레벨(크기 및 중력 속도)을 선택하고, P, I, D 게인을 조절하여 최적의 균형 제어를 실험해보세요.</p>
+
+            <!-- 레벨 1~3 선택기 -->
+            <div class="level-selector-box">
+                <span class="level-title-label">Difficulty Level Select</span>
+                <div class="level-buttons">
+                    <button class="level-btn active" data-level="1" id="level1Btn">
+                        <span>🟢 레벨 1</span>
+                        <span class="badge">기본 크기 (R:16, G:981)</span>
+                    </button>
+                    <button class="level-btn" data-level="2" id="level2Btn">
+                        <span>⚡ 레벨 2</span>
+                        <span class="badge">속도/중력 증가 (G:2200)</span>
+                    </button>
+                    <button class="level-btn" data-level="3" id="level3Btn">
+                        <span>🔥 레벨 3</span>
+                        <span class="badge">소형 공 & 초고속 (R:9, G:3500)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 메인 제어 버튼 -->
+            <div class="main-control-bar">
+                <button id="togglePidBtn" class="big-pid-btn active">
+                    <span class="status-dot"></span>
+                    <span id="pidStatusText">PID 제어: ON</span>
+                </button>
+                <button id="nudgeBtn" class="action-icon-btn" title="공을 살짝 쳐서 외란을 줍니다">
+                    <span>🎲 외란 주기 (공 튕기기)</span>
+                </button>
+                <button id="centerBallBtn" class="action-icon-btn" title="공을 중앙으로 리셋합니다">
+                    <span>🎯 중앙으로 복귀</span>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- 시뮬레이션 및 캔버스 영역 -->
+            <div class="simulation-area">
+                <div class="canvas-wrapper">
+                    <canvas id="simulationCanvas" width="800" height="400"></canvas>
+                    <div id="gameOverOverlay" class="overlay hidden">
+                        <h2>공이 떨어졌습니다!</h2>
+                        <p>경사면 밖으로 공이 이탈했습니다. 다시 시도하거나 PID 게인을 튜닝하세요.</p>
+                        <button id="restartBtn">다시 시작하기</button>
+                    </div>
+                </div>
+
+                <!-- 실시간 측정 대시보드 -->
+                <div class="dashboard">
+                    <div class="metric">
+                        <span class="label">기울기 각도</span>
+                        <span id="angleValue" class="value">0.0°</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">중심 오차 (Error)</span>
+                        <span id="errorValue" class="value" style="color: #38bdf8;">0.0 px</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">공 속도 (Velocity)</span>
+                        <span id="velocityValue" class="value">0 px/s</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">제어 방식</span>
+                        <span id="controlModeDisplay" class="value" style="font-size: 1.1rem; color: #34d399;">PID 자동</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 설정 및 PID 튜닝 패널 -->
+            <aside class="settings-panel">
+                <!-- 현재 레벨 정보 -->
+                <div class="level-info-banner">
+                    <div>
+                        <span id="currentLevelBadge" class="level-tag" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">LEVEL 1</span>
+                        <span id="currentLevelDesc" style="margin-left: 0.5rem; color: #cbd5e1;">기본 크기 & 표준 중력</span>
+                    </div>
+                </div>
+
+                <h2>PID Gain Tuning</h2>
+
+                <!-- P Gain -->
+                <div class="control-group">
+                    <div class="gain-slider-header">
+                        <label for="pGainSlider" style="color: #38bdf8; font-weight: 700;">P (비례 게인, Proportional)</label>
+                        <input type="number" id="pGainInput" class="gain-num-input" min="0" max="0.05" step="0.0005" value="0.0035">
+                    </div>
+                    <input type="range" id="pGainSlider" min="0" max="0.02" step="0.0002" value="0.0035">
+                    <span class="gain-desc">오차 크기에 비례하여 빔을 기울임 (너무 크면 과도한 진동 발생)</span>
+                </div>
+
+                <!-- I Gain -->
+                <div class="control-group">
+                    <div class="gain-slider-header">
+                        <label for="iGainSlider" style="color: #a78bfa; font-weight: 700;">I (적분 게인, Integral)</label>
+                        <input type="number" id="iGainInput" class="gain-num-input" min="0" max="0.005" step="0.0001" value="0.0002">
+                    </div>
+                    <input type="range" id="iGainSlider" min="0" max="0.002" step="0.00005" value="0.0002">
+                    <span class="gain-desc">누적 오차를 제거하여 중심에 정확히 안착 (너무 크면 불안정 누적)</span>
+                </div>
+
+                <!-- D Gain -->
+                <div class="control-group">
+                    <div class="gain-slider-header">
+                        <label for="dGainSlider" style="color: #f43f5e; font-weight: 700;">D (미분 게인, Derivative)</label>
+                        <input type="number" id="dGainInput" class="gain-num-input" min="0" max="0.05" step="0.001" value="0.0070">
+                    </div>
+                    <input type="range" id="dGainSlider" min="0" max="0.03" step="0.0005" value="0.0070">
+                    <span class="gain-desc">공의 속도 변화를 억제하는 브레이크 역할 (진동을 억제하고 댐핑)</span>
+                </div>
+
+                <!-- 원클릭 프리셋 -->
+                <div>
+                    <h3 style="margin-bottom: 0.4rem; font-size: 0.9rem;">추천 PID 게인 프리셋</h3>
+                    <div class="presets-grid">
+                        <button class="preset-btn" id="presetStable">🎯 안정적 밸런스</button>
+                        <button class="preset-btn" id="presetPHeavy">〰️ P 과다 (진동)</button>
+                        <button class="preset-btn" id="presetDLow">🛑 D 부족 (감쇠저하)</button>
+                        <button class="preset-btn" id="presetHighSpeed">⚡ 고속형 (레벨2/3)</button>
+                    </div>
+                </div>
+
+                <!-- 실시간 PID 기여도 분해 -->
+                <div>
+                    <h3 style="margin-bottom: 0.4rem; font-size: 0.9rem;">실시간 PID 기여도 분해</h3>
+                    <div class="breakdown-container">
+                        <div class="bar-row">
+                            <span class="bar-label" style="color: #38bdf8;">P</span>
+                            <div class="bar-track">
+                                <div id="pBarFill" class="bar-fill" style="background: #38bdf8; width: 0%;"></div>
+                            </div>
+                            <span id="pValText" class="bar-val">0.000</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label" style="color: #a78bfa;">I</span>
+                            <div class="bar-track">
+                                <div id="iBarFill" class="bar-fill" style="background: #a78bfa; width: 0%;"></div>
+                            </div>
+                            <span id="iValText" class="bar-val">0.000</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label" style="color: #f43f5e;">D</span>
+                            <div class="bar-track">
+                                <div id="dBarFill" class="bar-fill" style="background: #f43f5e; width: 0%;"></div>
+                            </div>
+                            <span id="dValText" class="bar-val">0.000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 실시간 오차 스코프 그래프 -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-size: 0.9rem; margin-bottom: 0;">실시간 위치/오차 스코프</h3>
+                        <span style="font-size: 0.7rem; color: #64748b;">수렴 곡선</span>
+                    </div>
+                    <canvas id="scopeCanvas" width="300" height="110"></canvas>
+                    <div class="scope-legend">
+                        <span>-300px (좌)</span>
+                        <span style="color: #38bdf8;">● 중심 (0px)</span>
+                        <span>+300px (우)</span>
+                    </div>
+                </div>
+
+                <!-- 상세 물리 슬라이더 (접을 수 있거나 조절 가능) -->
+                <div style="margin-top: 0.5rem; border-top: 1px solid #334155; padding-top: 0.8rem;">
+                    <div class="control-group">
+                        <label for="beamWidthSlider">레일 길이 (<span id="beamWidthDisplay">600</span> px)</label>
+                        <input type="range" id="beamWidthSlider" min="200" max="750" step="10" value="600">
+                    </div>
+                    <div class="control-group" style="margin-top: 0.5rem;">
+                        <label for="gravitySlider">현재 중력 가속도 G (<span id="gravityDisplay">981</span>)</label>
+                        <input type="range" id="gravitySlider" min="200" max="6000" step="50" value="981">
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="script3.js"></script>
+</body>
+</html>
