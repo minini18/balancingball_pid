@@ -169,6 +169,37 @@ window.addEventListener('keyup', (e) => {
     }
 });
 
+// 태블릿 / 모바일 터치 버튼 바인딩
+const touchLeftBtn = document.getElementById('touchLeftBtn');
+const touchRightBtn = document.getElementById('touchRightBtn');
+
+function bindTouchTiltButton(btn, keyName) {
+    if (!btn) return;
+
+    const start = (e) => {
+        if (e.cancelable) e.preventDefault();
+        keys[keyName] = true;
+        btn.classList.add('pressing');
+        if (state.isGameOver) resetSimulation();
+    };
+
+    const stop = (e) => {
+        if (e.cancelable) e.preventDefault();
+        keys[keyName] = false;
+        btn.classList.remove('pressing');
+    };
+
+    btn.addEventListener('touchstart', start, { passive: false });
+    btn.addEventListener('touchend', stop, { passive: false });
+    btn.addEventListener('touchcancel', stop, { passive: false });
+    btn.addEventListener('mousedown', start);
+    btn.addEventListener('mouseup', stop);
+    btn.addEventListener('mouseleave', stop);
+}
+
+bindTouchTiltButton(touchLeftBtn, 'ArrowLeft');
+bindTouchTiltButton(touchRightBtn, 'ArrowRight');
+
 // ==========================================
 // 2. 레벨 전환 로직
 // ==========================================
@@ -327,6 +358,14 @@ function updatePhysics(dt) {
 
         // 목표 각도 계산 (공이 오른쪽에 있으면 왼쪽으로 굴려야 하므로 각도는 음수)
         targetServoAngle = -(lastPContrib + lastIContrib + lastDContrib);
+
+        // 태블릿 터치 버튼 / 키보드 수동 개입 (PID 동작 중 외란 인가)
+        if (keys.ArrowLeft) {
+            targetServoAngle -= 0.18; // 좌측으로 강제 기울임
+        }
+        if (keys.ArrowRight) {
+            targetServoAngle += 0.18; // 우측으로 강제 기울임
+        }
 
         // 각도 제한
         targetServoAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, targetServoAngle));

@@ -155,6 +155,37 @@ window.addEventListener('keyup', (e) => {
     }
 });
 
+// 태블릿 / 모바일 터치 버튼 바인딩
+const touchLeftBtn = document.getElementById('touchLeftBtn');
+const touchRightBtn = document.getElementById('touchRightBtn');
+
+function bindTouchTiltButton(btn, keyName) {
+    if (!btn) return;
+
+    const start = (e) => {
+        if (e.cancelable) e.preventDefault();
+        keys[keyName] = true;
+        btn.classList.add('pressing');
+        if (state.isGameOver) resetSimulation();
+    };
+
+    const stop = (e) => {
+        if (e.cancelable) e.preventDefault();
+        keys[keyName] = false;
+        btn.classList.remove('pressing');
+    };
+
+    btn.addEventListener('touchstart', start, { passive: false });
+    btn.addEventListener('touchend', stop, { passive: false });
+    btn.addEventListener('touchcancel', stop, { passive: false });
+    btn.addEventListener('mousedown', start);
+    btn.addEventListener('mouseup', stop);
+    btn.addEventListener('mouseleave', stop);
+}
+
+bindTouchTiltButton(touchLeftBtn, 'ArrowLeft');
+bindTouchTiltButton(touchRightBtn, 'ArrowRight');
+
 restartBtn.addEventListener('click', resetSimulation);
 
 function setMode(mode) {
